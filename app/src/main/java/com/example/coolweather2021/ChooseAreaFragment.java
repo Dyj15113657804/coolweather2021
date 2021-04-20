@@ -105,9 +105,12 @@ public class ChooseAreaFragment extends Fragment {
                     selectedCity = cityList.get(position);
                     queryCounties();
                 }else if (currentLevel == LEVEL_COUNTY){
-                    String weatherId = countyList.get(position).getWeatherId();
+                    String weatherId1 = countyList.get(position).getWeatherId().substring(2);//用这个切割可行，只在这可行
+                    String weatherName = countyList.get(position).getCountyName();
+                    //String weatherId = weatherId1.split("H")[1];//行不通，这里切割会报错
                     Intent intent = new Intent(getActivity(),WeatherActivity.class);
-                    intent.putExtra("weather_id",weatherId);
+                    intent.putExtra("weather_id",weatherId1);
+                    intent.putExtra("weather_name",weatherName);
                     startActivity(intent);
                     getActivity().finish();
                 }

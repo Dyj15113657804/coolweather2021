@@ -7,17 +7,22 @@ public class Now {
     @SerializedName("code")
     public String status;
 
-    @SerializedName("obsTime")
-    public String checkTime;
+    @SerializedName("now")
+    public classNow now;
 
-    @SerializedName("temp")
-    public String temperature;
+    public class classNow{
+        @SerializedName("obsTime")
+        public String checkTime;
 
-    @SerializedName("icon")
-    public String iconImage;
+        @SerializedName("temp")
+        public String temperature;
 
-    @SerializedName("text")
-    public String information;
+        @SerializedName("icon")
+        public String iconImage;
+
+        @SerializedName("text")
+        public String information;
+    }
 
 
 

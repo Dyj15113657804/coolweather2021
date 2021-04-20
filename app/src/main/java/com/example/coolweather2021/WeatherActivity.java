@@ -3,6 +3,7 @@ package com.example.coolweather2021;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 
 import com.example.coolweather2021.gson.AQI;
 import com.example.coolweather2021.gson.Daily;
@@ -37,7 +39,7 @@ import okhttp3.Response;
  */
 public class WeatherActivity extends AppCompatActivity {
 
-    //private final Context mContext;
+    private Context mContext;
     @BindView(R.id.weather_layout) ScrollView weatherLayout;
     @BindView(R.id.title_city) TextView titleCity;
     @BindView(R.id.title_update_time) TextView titleUpdateTime;
@@ -52,15 +54,7 @@ public class WeatherActivity extends AppCompatActivity {
     @BindView(R.id.icon_now) ImageView weatherImage;
 
 
-
     static final String key = "&key=98c2e401cf4b46908da304061da6bc16";
-
-    /*public WeatherActivity(Context mContext) {
-        this.mContext = mContext;
-    }
-
-     */
-
 
 
     @Override
@@ -70,60 +64,56 @@ public class WeatherActivity extends AppCompatActivity {
         ButterKnife.bind(this);//Use butterKnife
 
         SharedPreferences nowWeather = getSharedPreferences("weatherNow", MODE_PRIVATE);
-        SharedPreferences dailyWeather = getSharedPreferences("weatherDaily", MODE_PRIVATE);
         SharedPreferences aqiWeather = getSharedPreferences("weatherAQI", MODE_PRIVATE);
+        SharedPreferences dailyWeather = getSharedPreferences("weatherDaily", MODE_PRIVATE);
         SharedPreferences suggestionWeather = getSharedPreferences("weatherSuggestion", MODE_PRIVATE);
+
         String weatherNowString = nowWeather.getString("Now", null);
-        String weatherDailyString = dailyWeather.getString("Daily", null);
         String weatherAQIString = aqiWeather.getString("AQI", null);
+        String weatherDailyString = dailyWeather.getString("Daily", null);
         String weatherSuggestionString = suggestionWeather.getString("Suggestion", null);
+        String Name = nowWeather.getString("Name",null);
 
-        String weatherId = getIntent().getStringExtra("weather_id");
 
+        String weatherId= getIntent().getStringExtra("weather_id");
+
+        //WeatherId weatherData = new WeatherId();
+        //weatherData.weatherId = weatherId1;
+        //String weatherId = splitData(weatherData);//都没用
+
+        String weatherName = getIntent().getStringExtra("weather_name");
+
+        //showToast(weatherId);
         if (weatherNowString != null && weatherAQIString != null && weatherDailyString != null
                 && weatherSuggestionString != null){
             Weather weather = new Weather();
             weather.now = Utility.handlerWeatherNowResponse(weatherNowString);
             weather.aqi = Utility.handlerWeatherAQIResponse(weatherAQIString);
-            weather.suggestion = Utility.handlerWeatherSuggestionResponse(weatherSuggestionString);
             weather.daily = Utility.handlerWeatherDailyResponse(weatherDailyString);
-            showWeatherInfo(weather,weatherId);
+            weather.suggestion = Utility.handlerWeatherSuggestionResponse(weatherSuggestionString);
+
+            showWeatherInfo(weather,Name);
         }else {
             weatherLayout.setVisibility(View.INVISIBLE);
-            requestWeatherNow(weatherId);
-            requestWeatherAQI(weatherId);
-            requestWeatherDaily(weatherId);
-            requestWeatherSuggestion(weatherId);
-            shareDataUse(weatherId);
-        }
-    }
+            requestWeatherNow(weatherId,weatherName);
+            requestWeatherAQI(weatherId,weatherName);
+            requestWeatherDaily(weatherId,weatherName);
+            requestWeatherSuggestion(weatherId,weatherName);
+            //recreate();以下为刷新Activity机制
+            finish();
+            overridePendingTransition(0, 0);
+            startActivity(getIntent());
+            overridePendingTransition(0, 0);
 
-    /**
-     * 数据读取和解析的复用，没写完善
-     * @param weatherId 传入的地区名字
-     */
-    public void shareDataUse(String weatherId){
-        SharedPreferences nowWeather = getSharedPreferences("weatherNow", MODE_PRIVATE);
-        SharedPreferences dailyWeather = getSharedPreferences("weatherDaily", MODE_PRIVATE);
-        SharedPreferences aqiWeather = getSharedPreferences("weatherAQI", MODE_PRIVATE);
-        SharedPreferences suggestionWeather = getSharedPreferences("weatherSuggestion", MODE_PRIVATE);
-        String weatherNowString = nowWeather.getString("Now", null);
-        String weatherDailyString = dailyWeather.getString("Daily", null);
-        String weatherAQIString = aqiWeather.getString("AQI", null);
-        String weatherSuggestionString = suggestionWeather.getString("Suggestion", null);
-        Weather weather = new Weather();
-        weather.now = Utility.handlerWeatherNowResponse(weatherNowString);
-        weather.aqi = Utility.handlerWeatherAQIResponse(weatherAQIString);
-        weather.suggestion = Utility.handlerWeatherSuggestionResponse(weatherSuggestionString);
-        weather.daily = Utility.handlerWeatherDailyResponse(weatherDailyString);
-        showWeatherInfo(weather,weatherId);
+
+        }
     }
 
     /**
      * 去和风天气服务器获取实时天气信息Now
      * @param weatherId 传入城市ID
      */
-    public void requestWeatherNow(final String weatherId){
+    public void requestWeatherNow(final String weatherId,final String weatherName){
         String weatherNowUrl = "https://devapi.qweather.com/v7/weather/now?location="+weatherId+
                 key;
         HttpUtil.sendOkHttpRequest(weatherNowUrl, new Callback() {
@@ -140,15 +130,18 @@ public class WeatherActivity extends AppCompatActivity {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 final String responseText = response.body().string();
-                final Now now = Utility.handlerWeatherNowResponse(responseText);
+                final Weather weather = new Weather();
+                weather.now = Utility.handlerWeatherNowResponse(responseText);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (now != null && "200".equals(now.status)){
+                        if (weather.now != null && "200".equals(weather.now.status)){
                             SharedPreferences.Editor editor = getSharedPreferences("weatherNow",
                                     MODE_PRIVATE).edit();
                             editor.putString("Now",responseText);
+                            editor.putString("Name",weatherName);//借这里储存城市名
                             editor.apply();
+
                         }else {
                             showToast("获取天气信息失败");
                         }
@@ -163,7 +156,7 @@ public class WeatherActivity extends AppCompatActivity {
      * 去和风天气获取多天天气信息Daily
      * @param weatherId 传入城市ID
      */
-    public void requestWeatherDaily(final String weatherId){
+    public void requestWeatherDaily(final String weatherId,final String weatherName){
         String weatherNowUrl = "https://devapi.qweather.com/v7/weather/7d?location="+weatherId+
                 key;
         HttpUtil.sendOkHttpRequest(weatherNowUrl, new Callback() {
@@ -180,15 +173,17 @@ public class WeatherActivity extends AppCompatActivity {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 final String responseText = response.body().string();
-                final Daily daily = Utility.handlerWeatherDailyResponse(responseText);
+                final Weather weather = new Weather();
+                weather.daily = Utility.handlerWeatherDailyResponse(responseText);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (daily != null && "200".equals(daily.status)){
+                        if (weather.daily != null && "200".equals(weather.daily.status)){
                             SharedPreferences.Editor editor = getSharedPreferences("weatherDaily",
                                     MODE_PRIVATE).edit();
                             editor.putString("Daily",responseText);
                             editor.apply();
+
                         }else {
                             showToast("获取天气信息失败");
                         }
@@ -202,9 +197,9 @@ public class WeatherActivity extends AppCompatActivity {
      *去和风天气获取空气质量信息AQI
      * @param weatherId 传入城市ID
      */
-    public void requestWeatherAQI(final String weatherId){
+    public void requestWeatherAQI(final String weatherId,final String weatherName){
         String weatherNowUrl = "https://devapi.qweather.com/v7/air/now?location="+weatherId+
-                key;
+                "&key=98c2e401cf4b46908da304061da6bc16";
         HttpUtil.sendOkHttpRequest(weatherNowUrl, new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
@@ -219,15 +214,17 @@ public class WeatherActivity extends AppCompatActivity {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 final String responseText = response.body().string();
-                final AQI aqi = Utility.handlerWeatherAQIResponse(responseText);
+                final Weather weather = new Weather();
+                weather.aqi = Utility.handlerWeatherAQIResponse(responseText);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (aqi != null && "200".equals(aqi.status)){
+                        if (weather.aqi != null && "200".equals(weather.aqi.status)){
                             SharedPreferences.Editor editor = getSharedPreferences("weatherAQI",
                                     MODE_PRIVATE).edit();
                             editor.putString("AQI",responseText);
                             editor.apply();
+
                         }else {
                             showToast("获取天气信息失败");
                         }
@@ -241,9 +238,9 @@ public class WeatherActivity extends AppCompatActivity {
      * 去和风天气获取生活建议信息Suggestion
      * @param weatherId 传入城市ID
      */
-    public void requestWeatherSuggestion(final String weatherId){
+    public void requestWeatherSuggestion(final String weatherId,final String weatherName){
         String weatherNowUrl = "https://devapi.qweather.com/v7/indices/1d?type=3,9,13&location="+weatherId+
-                key;
+                "&key=98c2e401cf4b46908da304061da6bc16";
         HttpUtil.sendOkHttpRequest(weatherNowUrl, new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
@@ -258,15 +255,17 @@ public class WeatherActivity extends AppCompatActivity {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 final String responseText = response.body().string();
-                final Suggestion suggestion = Utility.handlerWeatherSuggestionResponse(responseText);
+                final Weather weather = new Weather();
+                weather.suggestion = Utility.handlerWeatherSuggestionResponse(responseText);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (suggestion != null && "200".equals(suggestion.status)){
+                        if (weather.suggestion != null && "200".equals(weather.suggestion.status)){
                             SharedPreferences.Editor editor = getSharedPreferences("weatherSuggestion",
                                     MODE_PRIVATE).edit();
                             editor.putString("Suggestion",responseText);
                             editor.apply();
+
                         }else {
                             showToast("获取天气信息失败");
                         }
@@ -283,20 +282,23 @@ public class WeatherActivity extends AppCompatActivity {
      * @param localName 传入选择了的城市名
      */
     private void showWeatherInfo(@NotNull Weather weather, String localName){
-        String updateTime = weather.now.checkTime.split("T|\\+")[1];
-        String degree = weather.now.temperature + "°C";
-        String weatherInfo = weather.now.information;
-        /*String weatherIcon = "icon_" + weather.now.iconImage;
-        ApplicationInfo applicationInfo = mContext.getApplicationInfo();
+        String updateTime = weather.now.now.checkTime.split("T|\\+")[1];
+        String degree = weather.now.now.temperature + "°C";
+        String weatherInfo = weather.now.now.information;
+        String weatherIcon = "icon_" + weather.now.now.iconImage;
+        /*ApplicationInfo applicationInfo = mContext.getApplicationInfo();
         int intID = mContext.getResources().getIdentifier(weatherIcon,"drawable",
                 applicationInfo.packageName);//获取drawable文件下边的文件id
         weatherImage.setImageResource(intID);//这样不一定能对，不行就人工case
 
          */
+
+
         titleCity.setText(localName);
         titleUpdateTime.setText(updateTime);
         weatherInfoText.setText(weatherInfo);
         degreeText.setText(degree);
+
         forecastLayout.removeAllViews();
         for(Daily.Forecast forecast : weather.daily.forecastList){
             View view = LayoutInflater.from(this).inflate(R.layout.forecast_item,forecastLayout,false);
@@ -306,10 +308,13 @@ public class WeatherActivity extends AppCompatActivity {
             TextView minText = view.findViewById(R.id.min_text);
             dateText.setText(forecast.date);
             infoText.setText(forecast.information);
-            maxText.setText(forecast.TemperatureMax);
-            minText.setText(forecast.TemperatureMin);
+            maxText.setText(String.format("%s°C", forecast.TemperatureMax));//直接在后面加“°C”有警告，换成这个就没了
+            minText.setText(new StringBuilder().append(forecast.TemperatureMin).append("°C").toString());
             forecastLayout.addView(view);
         }
+
+
+
         if (weather.aqi != null){
             aqiText.setText(weather.aqi.aqiNow.aqi);
             pm25Text.setText(weather.aqi.aqiNow.pm25);
@@ -317,14 +322,20 @@ public class WeatherActivity extends AppCompatActivity {
 
         for (Suggestion.SuggestionTo suggestion : weather.suggestion.suggestionToList){
             String suggestText = suggestion.name + ": " + suggestion.suggestionText;
-            if (suggestion.name.equals("穿衣指数")){
-                wearText.setText(suggestText);
-            }else if (suggestion.name.equals("感冒指数")){
-                healthText.setText(suggestText);
-            }else if (suggestion.name.equals("化妆指数")){
-                paintingText.setText(suggestText);
+            switch (suggestion.name) {
+                case "穿衣指数":
+                    wearText.setText(suggestText);
+                    break;
+                case "感冒指数":
+                    healthText.setText(suggestText);
+                    break;
+                case "化妆指数":
+                    paintingText.setText(suggestText);
+                    break;
             }
         }
+
+
 
         weatherLayout.setVisibility(View.VISIBLE);
 
