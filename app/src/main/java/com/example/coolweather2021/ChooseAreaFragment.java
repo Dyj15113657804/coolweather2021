@@ -22,6 +22,7 @@ import androidx.fragment.app.Fragment;
 import com.example.coolweather2021.db.City;
 import com.example.coolweather2021.db.County;
 import com.example.coolweather2021.db.Province;
+import com.example.coolweather2021.gson.Weather;
 import com.example.coolweather2021.util.HttpUtil;
 import com.example.coolweather2021.util.Utility;
 
@@ -107,12 +108,24 @@ public class ChooseAreaFragment extends Fragment {
                 }else if (currentLevel == LEVEL_COUNTY){
                     String weatherId1 = countyList.get(position).getWeatherId().substring(2);//用这个切割可行，只在这可行
                     String weatherName = countyList.get(position).getCountyName();
-                    //String weatherId = weatherId1.split("H")[1];//行不通，这里切割会报错
-                    Intent intent = new Intent(getActivity(),WeatherActivity.class);
-                    intent.putExtra("weather_id",weatherId1);
-                    intent.putExtra("weather_name",weatherName);
-                    startActivity(intent);
-                    getActivity().finish();
+                    if (getActivity() instanceof MainActivity){
+
+                        //String weatherId = weatherId1.split("H")[1];//行不通，这里切割会报错
+                        Intent intent = new Intent(getActivity(),WeatherActivity.class);
+                        intent.putExtra("weather_id",weatherId1);
+                        intent.putExtra("weather_name",weatherName);
+                        startActivity(intent);
+                        getActivity().finish();
+                    }else if (getActivity() instanceof WeatherActivity){
+                        WeatherActivity activity = (WeatherActivity) getActivity();
+                        activity.drawerLayout.closeDrawers();
+                        activity.swipeRefresh.setRefreshing(true);
+                        activity.requestWeatherNow(weatherId1,weatherName);
+                        activity.requestWeatherAQI(weatherId1);
+                        activity.requestWeatherDaily(weatherId1);
+                        activity.requestWeatherSuggestion(weatherId1);
+                    }
+
                 }
             }
         });
