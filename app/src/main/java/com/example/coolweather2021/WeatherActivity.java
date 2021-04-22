@@ -29,6 +29,7 @@ import com.example.coolweather2021.gson.Daily;
 import com.example.coolweather2021.gson.Now;
 import com.example.coolweather2021.gson.Suggestion;
 import com.example.coolweather2021.gson.Weather;
+import com.example.coolweather2021.service.AutoUpdateService;
 import com.example.coolweather2021.util.HttpUtil;
 import com.example.coolweather2021.util.Utility;
 
@@ -48,20 +49,34 @@ import okhttp3.Response;
 public class WeatherActivity extends AppCompatActivity {
 
     private Context mContext;
-    @BindView(R.id.weather_layout) ScrollView weatherLayout;
-    @BindView(R.id.title_city) TextView titleCity;
-    @BindView(R.id.title_update_time) TextView titleUpdateTime;
-    @BindView(R.id.degree_text) TextView degreeText;
-    @BindView(R.id.weather_info_text) TextView weatherInfoText;
-    @BindView(R.id.forecast_layout) LinearLayout forecastLayout;
-    @BindView(R.id.aqi_text) TextView aqiText;
-    @BindView(R.id.pm25_text) TextView pm25Text;
-    @BindView(R.id.health_text) TextView healthText;
-    @BindView(R.id.face_painting_text) TextView paintingText;
-    @BindView(R.id.wear_text) TextView wearText;
-    @BindView(R.id.icon_now) ImageView weatherImage;
-    @BindView(R.id.bing_pic_img) ImageView bingPicImg;
-    @BindView(R.id.swipe_refresh) SwipeRefreshLayout swipeRefresh;
+    @BindView(R.id.weather_layout)
+    ScrollView weatherLayout;
+    @BindView(R.id.title_city)
+    TextView titleCity;
+    @BindView(R.id.title_update_time)
+    TextView titleUpdateTime;
+    @BindView(R.id.degree_text)
+    TextView degreeText;
+    @BindView(R.id.weather_info_text)
+    TextView weatherInfoText;
+    @BindView(R.id.forecast_layout)
+    LinearLayout forecastLayout;
+    @BindView(R.id.aqi_text)
+    TextView aqiText;
+    @BindView(R.id.pm25_text)
+    TextView pm25Text;
+    @BindView(R.id.health_text)
+    TextView healthText;
+    @BindView(R.id.face_painting_text)
+    TextView paintingText;
+    @BindView(R.id.wear_text)
+    TextView wearText;
+    @BindView(R.id.icon_now)
+    ImageView weatherImage;
+    @BindView(R.id.bing_pic_img)
+    ImageView bingPicImg;
+    @BindView(R.id.swipe_refresh)
+    SwipeRefreshLayout swipeRefresh;
     @BindView(R.id.drawer_layout)
     DrawerLayout drawerLayout;
     @BindView(R.id.nav_button)
@@ -76,7 +91,7 @@ public class WeatherActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN
-        |View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        |View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
 
         setContentView(R.layout.activity_weather);
@@ -110,7 +125,7 @@ public class WeatherActivity extends AppCompatActivity {
         }else {
             loadBingPic();
         }
-        //showToast(weatherId);
+
         if (weatherNowString != null && weatherAQIString != null && weatherDailyString != null
                 && weatherSuggestionString != null){
             Weather weather = new Weather();
@@ -127,14 +142,25 @@ public class WeatherActivity extends AppCompatActivity {
             requestWeatherSuggestion(weatherId);
         }
 
+        //不知为何，这里还无法更新
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                requestWeatherNow(weatherId,weatherName);
-                requestWeatherAQI(weatherId);
-                requestWeatherDaily(weatherId);
-                requestWeatherSuggestion(weatherId);
-                swipeRefresh.setRefreshing(false);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                            try {
+                                Thread.sleep(1000);
+                                requestWeatherNow(weatherId,weatherName);
+                                requestWeatherAQI(weatherId);
+                                requestWeatherDaily(weatherId);
+                                requestWeatherSuggestion(weatherId);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                    }
+                }).start();
+
 
             }
         });
@@ -162,7 +188,6 @@ public class WeatherActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         showToast("获取天气信息失败");
-                        swipeRefresh.setRefreshing(false);
                     }
                 });
             }
@@ -180,12 +205,12 @@ public class WeatherActivity extends AppCompatActivity {
                                     MODE_PRIVATE).edit();
                             editor.putString("Now",responseText);
                             editor.putString("Name",weatherName);//借这里储存城市名
+                            editor.putString("ID",weatherId);
                             editor.apply();
                             showWeatherNowInfo(weather.now,weatherName);
                         }else {
                             showToast("获取天气信息失败");
                         }
-                        swipeRefresh.setRefreshing(false);
                     }
                 });
             }
@@ -293,7 +318,7 @@ public class WeatherActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         showToast("获取天气信息失败");
-                        //swipeRefresh.setRefreshing(false);
+                        swipeRefresh.setRefreshing(false);
                     }
                 });
             }
@@ -315,7 +340,7 @@ public class WeatherActivity extends AppCompatActivity {
                         }else {
                             showToast("获取天气信息失败");
                         }
-                        //swipeRefresh.setRefreshing(false);
+                        swipeRefresh.setRefreshing(false);
                     }
                 });
             }
@@ -437,10 +462,10 @@ public class WeatherActivity extends AppCompatActivity {
             }
         }
 
-
-
         weatherLayout.setVisibility(View.VISIBLE);
 
+        Intent intent = new Intent(this, AutoUpdateService.class);
+        startService(intent);
     }
 
     /**
