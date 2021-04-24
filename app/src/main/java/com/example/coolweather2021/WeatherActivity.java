@@ -3,15 +3,12 @@ package com.example.coolweather2021;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.dynamicanimation.animation.SpringAnimation;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -91,9 +88,9 @@ public class WeatherActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN
-        |View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        |View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
-
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
         setContentView(R.layout.activity_weather);
         ButterKnife.bind(this);//Use butterKnife
 
@@ -141,6 +138,7 @@ public class WeatherActivity extends AppCompatActivity {
             requestWeatherDaily(weatherId);
             requestWeatherSuggestion(weatherId);
         }
+
 
         //不知为何，这里还无法更新
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -348,18 +346,28 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
 
-
+    /**
+     * 更新Now状态
+     * @param now Now类的传入
+     * @param localName 地点名
+     */
     public void showWeatherNowInfo(Now now,String localName){
         String updateTime = now.now.checkTime.split("T|\\+")[1];
         String degree = now.now.temperature + "°C";
         String weatherInfo = now.now.information;
-        String weatherIcon = "icon_" + now.now.iconImage;
+        String weatherIcon = now.now.iconImage;
+
         titleCity.setText(localName);
         titleUpdateTime.setText(updateTime);
         weatherInfoText.setText(weatherInfo);
         degreeText.setText(degree);
+        weatherImage.setImageResource(weatherIcon(weatherIcon));
     }
 
+    /**
+     * 更新Daily状态
+     * @param daily Daily类的传入
+     */
     public void showWeatherDailyInfo(Daily daily){
         forecastLayout.removeAllViews();
         for(Daily.Forecast forecast : daily.forecastList){
@@ -376,6 +384,10 @@ public class WeatherActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 更新AQI类
+     * @param aqi AQI类的传入
+     */
     public void showWeatherAQIInfo(AQI aqi){
         if (aqi != null){
             aqiText.setText(aqi.aqiNow.aqi);
@@ -383,6 +395,10 @@ public class WeatherActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 更新Weather类
+     * @param suggestionId Weather类的传入
+     */
     public void showWeatherSuggestion(Suggestion suggestionId){
 
         for (Suggestion.SuggestionTo suggestion : suggestionId.suggestionToList){
@@ -411,17 +427,13 @@ public class WeatherActivity extends AppCompatActivity {
         String updateTime = weather.now.now.checkTime.split("T|\\+")[1];
         String degree = weather.now.now.temperature + "°C";
         String weatherInfo = weather.now.now.information;
-        String weatherIcon = "icon_" + weather.now.now.iconImage;
-        /*ApplicationInfo applicationInfo = mContext.getApplicationInfo();
-        int intID = mContext.getResources().getIdentifier(weatherIcon,"drawable",
-                applicationInfo.packageName);//获取drawable文件下边的文件id
-        weatherImage.setImageResource(intID);//这样不一定能对，不行就人工case
+        String weatherIcon = weather.now.now.iconImage;
 
-         */
         titleCity.setText(localName);
         titleUpdateTime.setText(updateTime);
         weatherInfoText.setText(weatherInfo);
         degreeText.setText(degree);
+        weatherImage.setImageResource(weatherIcon(weatherIcon));
 
 
         forecastLayout.removeAllViews();
@@ -437,7 +449,6 @@ public class WeatherActivity extends AppCompatActivity {
             minText.setText(new StringBuilder().append(forecast.TemperatureMin).append("°C").toString());
             forecastLayout.addView(view);
         }
-
 
 
         if (weather.aqi != null){
@@ -501,6 +512,138 @@ public class WeatherActivity extends AppCompatActivity {
      */
     public void showToast(String msg){
         Toast.makeText(WeatherActivity.this,msg,Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * 对天气图标的选择
+     * @param icon 天气图标参数
+     * @return 天气图标的int值
+     */
+    private int weatherIcon(String icon){
+        switch (icon){
+            case "100":
+                return R.drawable.icon_100;
+            case "101":
+                return R.drawable.icon_101;
+            case "102":
+                return R.drawable.icon_102;
+            case "103":
+                return R.drawable.icon_103;
+            case "104":
+                return R.drawable.icon_104;
+            case "150":
+                return R.drawable.icon_150;
+            case "153":
+                return R.drawable.icon_153;
+            case "154":
+                return R.drawable.icon_154;
+            case "300":
+                return R.drawable.icon_300;
+            case "301":
+                return R.drawable.icon_301;
+            case "302":
+                return R.drawable.icon_302;
+            case "303":
+                return R.drawable.icon_303;
+            case "304":
+                return R.drawable.icon_304;
+            case "305":
+                return R.drawable.icon_305;
+            case "306":
+                return R.drawable.icon_306;
+            case "307":
+                return R.drawable.icon_307;
+            case "308":
+                return R.drawable.icon_308;
+            case "309":
+                return R.drawable.icon_309;
+            case "310":
+                return R.drawable.icon_310;
+            case "311":
+                return R.drawable.icon_311;
+            case "312":
+                return R.drawable.icon_312;
+            case "313":
+                return R.drawable.icon_313;
+            case "314":
+                return R.drawable.icon_314;
+            case "315":
+                return R.drawable.icon_315;
+            case "316":
+                return R.drawable.icon_316;
+            case "317":
+                return R.drawable.icon_317;
+            case "318":
+                return R.drawable.icon_318;
+            case "350":
+                return R.drawable.icon_350;
+            case "351":
+                return R.drawable.icon_351;
+            case "399":
+                return R.drawable.icon_399;
+            case "400":
+                return R.drawable.icon_400;
+            case "401":
+                return R.drawable.icon_401;
+            case "402":
+                return R.drawable.icon_402;
+            case "403":
+                return R.drawable.icon_403;
+            case "404":
+                return R.drawable.icon_404;
+            case "405":
+                return R.drawable.icon_405;
+            case "406":
+                return R.drawable.icon_406;
+            case "407":
+                return R.drawable.icon_407;
+            case "408":
+                return R.drawable.icon_408;
+            case "409":
+                return R.drawable.icon_409;
+            case "410":
+                return R.drawable.icon_410;
+            case "456":
+                return R.drawable.icon_456;
+            case "457":
+                return R.drawable.icon_457;
+            case "499":
+                return R.drawable.icon_499;
+            case "500":
+                return R.drawable.icon_500;
+            case "501":
+                return R.drawable.icon_501;
+            case "502":
+                return R.drawable.icon_502;
+            case "503":
+                return R.drawable.icon_503;
+            case "504":
+                return R.drawable.icon_504;
+            case "507":
+                return R.drawable.icon_507;
+            case "508":
+                return R.drawable.icon_509;
+            case "510":
+                return R.drawable.icon_510;
+            case "511":
+                return R.drawable.icon_511;
+            case "512":
+                return R.drawable.icon_512;
+            case "513":
+                return R.drawable.icon_513;
+            case "514":
+                return R.drawable.icon_514;
+            case "515":
+                return R.drawable.icon_515;
+            case "900":
+                return R.drawable.icon_900;
+            case "901":
+                return R.drawable.icon_901;
+            case "999":
+                return R.drawable.icon_999;
+        }
+
+        return 100;
     }
 
 }
