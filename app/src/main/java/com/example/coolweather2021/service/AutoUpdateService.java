@@ -24,8 +24,6 @@ import okhttp3.Response;
 
 public class AutoUpdateService extends Service {
     static final String key = "&key=98c2e401cf4b46908da304061da6bc16";
-    public AutoUpdateService() {
-    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -37,7 +35,7 @@ public class AutoUpdateService extends Service {
         updateWeather();
         updateBingPic();
         AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        int anHour = 8*60*60*1000;
+        int anHour = 1*60*60*1000;
         long triggerAtTime = SystemClock.elapsedRealtime() +anHour;
         Intent intent1 = new Intent(this,AutoUpdateService.class);
         PendingIntent pendingIntent = PendingIntent.getService(this,0,intent1,0);
@@ -90,7 +88,7 @@ public class AutoUpdateService extends Service {
 
         if (weatherAQIString != null){
             String weatherNowUrl = "https://devapi.qweather.com/v7/air/now?location="+weatherId+
-                    "&key=98c2e401cf4b46908da304061da6bc16";
+                    key;
             HttpUtil.sendOkHttpRequest(weatherNowUrl, new Callback() {
                 @Override
                 public void onFailure(@NotNull Call call, @NotNull IOException e) {
@@ -140,7 +138,7 @@ public class AutoUpdateService extends Service {
 
         if (weatherSuggestionString != null){
             String weatherNowUrl = "https://devapi.qweather.com/v7/indices/1d?type=3,9,13&location="+weatherId+
-                    "&key=98c2e401cf4b46908da304061da6bc16";
+                    key;
             HttpUtil.sendOkHttpRequest(weatherNowUrl, new Callback() {
                 @Override
                 public void onFailure(@NotNull Call call, @NotNull IOException e) {

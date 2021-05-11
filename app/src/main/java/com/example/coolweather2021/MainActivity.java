@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import com.didichuxing.doraemonkit.DoraemonKit;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override

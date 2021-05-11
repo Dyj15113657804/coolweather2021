@@ -45,7 +45,6 @@ import okhttp3.Response;
  */
 public class WeatherActivity extends AppCompatActivity {
 
-    private Context mContext;
     @BindView(R.id.weather_layout)
     ScrollView weatherLayout;
     @BindView(R.id.title_city)
@@ -86,13 +85,17 @@ public class WeatherActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN
         |View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         getWindow().setNavigationBarColor(Color.TRANSPARENT);
+
         setContentView(R.layout.activity_weather);
         ButterKnife.bind(this);//Use butterKnife
+
+        String weatherId= getIntent().getStringExtra("weather_id");
 
         swipeRefresh.setColorSchemeResources(R.color.design_default_color_secondary_variant);
 
@@ -107,9 +110,8 @@ public class WeatherActivity extends AppCompatActivity {
         String weatherDailyString = dailyWeather.getString("Daily", null);
         String weatherSuggestionString = suggestionWeather.getString("Suggestion", null);
         String Name = nowWeather.getString("Name",null);
+        String Id = nowWeather.getString("ID",null);
         String bingPic = BingPic.getString("bing_pic",null);
-
-        String weatherId= getIntent().getStringExtra("weather_id");
 
         //WeatherId weatherData = new WeatherId();
         //weatherData.weatherId = weatherId1;
@@ -140,25 +142,29 @@ public class WeatherActivity extends AppCompatActivity {
         }
 
 
-        //不知为何，这里还无法更新
+        //不知为何，这里还无法更新（解决了）
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                            try {
-                                Thread.sleep(1000);
-                                requestWeatherNow(weatherId,weatherName);
-                                requestWeatherAQI(weatherId);
-                                requestWeatherDaily(weatherId);
-                                requestWeatherSuggestion(weatherId);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                    }
-                }).start();
+//                SharedPreferences nowWeather = getSharedPreferences("weatherNow", MODE_PRIVATE);
+                String Id = nowWeather.getString("ID",null);//重新传入当下的ID，解决无法更新的问题
+                String Name = nowWeather.getString("Name",null);
+                requestWeatherNow(Id,Name);
+                requestWeatherAQI(Id);
+                requestWeatherDaily(Id);
+                requestWeatherSuggestion(Id);
 
+//                new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                            try {
+//                                Thread.sleep(1000);
+//
+//                            } catch (InterruptedException e) {
+//                                e.printStackTrace();
+//                            }
+//                    }
+//                }).start();
 
             }
         });
@@ -265,7 +271,7 @@ public class WeatherActivity extends AppCompatActivity {
      */
     public void requestWeatherAQI(final String weatherId){
         String weatherNowUrl = "https://devapi.qweather.com/v7/air/now?location="+weatherId+
-                "&key=98c2e401cf4b46908da304061da6bc16";
+                key;
         HttpUtil.sendOkHttpRequest(weatherNowUrl, new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
@@ -308,7 +314,7 @@ public class WeatherActivity extends AppCompatActivity {
      */
     public void requestWeatherSuggestion(final String weatherId){
         String weatherNowUrl = "https://devapi.qweather.com/v7/indices/1d?type=3,9,13&location="+weatherId+
-                "&key=98c2e401cf4b46908da304061da6bc16";
+                key;
         HttpUtil.sendOkHttpRequest(weatherNowUrl, new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
